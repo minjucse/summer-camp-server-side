@@ -23,11 +23,30 @@ const client = new MongoClient(uri, {
 async function run() {
   try {
     // Connect the client to the server	(optional starting in v4.7)
-     client.connect();
+    client.connect();
     // Send a ping to confirm a successful connection
     app.get('/', (req, res) => {
       res.send('Server Api is running')
     });
+
+    // Users Table 
+    const usersCollection = client.db('campSchool').collection('users');
+
+    // Users related apis start
+
+    app.post('/api/add-user', async (req, res) => {
+      const user = req.body;
+      const query = { email: user.email }
+      const existingUser = await usersCollection.findOne(query);
+
+      if (existingUser) {
+        return res.send({ message: 'user already exists' })
+      }
+
+      const result = await usersCollection.insertOne(user);
+      res.send(result);
+    });
+    // Users related apis end
 
     console.log("Pinged your deployment. You successfully connected to MongoDB!");
   } finally {

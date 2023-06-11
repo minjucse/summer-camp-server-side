@@ -33,7 +33,7 @@ async function run() {
     const usersCollection = client.db('campSchool').collection('users');
 
     // Users related apis start
-    app.get('/api/users',  async (req, res) => {
+    app.get('/api/users', async (req, res) => {
       const result = await usersCollection.find().toArray();
       res.send(result);
     });
@@ -51,7 +51,18 @@ async function run() {
       res.send(result);
     });
 
-   
+    app.patch('/users/admin/:id', async (req, res) => {
+      const filter = { _id: new ObjectId(req.params.id) };
+      const updateDoc = {
+        $set: {
+          role: body.role
+        },
+      };
+
+      const result = await usersCollection.updateOne(filter, updateDoc);
+      res.send(result);
+
+    })
     // Users related apis end
 
     console.log("Pinged your deployment. You successfully connected to MongoDB!");

@@ -56,6 +56,7 @@ async function run() {
 
       res.send({ token })
     })
+
     const verifyAdmin = async (req, res, next) => {
       const email = req.decoded.email;
       const query = { email: email }
@@ -98,6 +99,19 @@ async function run() {
       const result = await usersCollection.updateOne(filter, updateDoc);
       res.send(result);
 
+    })
+
+    app.get('/api/users/admin/:email', verifyJWT, async (req, res) => {
+      const email = req.params.email;
+
+      if (req.decoded.email !== email) {
+        res.send({ admin: false })
+      }
+
+      const query = { email: email }
+      const user = await usersCollection.findOne(query);
+      const result = { admin: user?.role === 'admin' }
+      res.send(result);
     })
     // Users related apis end
 

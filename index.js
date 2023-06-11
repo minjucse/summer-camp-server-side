@@ -51,8 +51,10 @@ async function run() {
       res.send(result);
     });
 
-    app.patch('/users/admin/:id', async (req, res) => {
-      const filter = { _id: new ObjectId(req.params.id) };
+    app.patch('/user/roleset', async (req, res) => {
+      
+      const filter = { _id: new ObjectId(req.body.id) };
+
       const updateDoc = {
         $set: {
           role: body.role

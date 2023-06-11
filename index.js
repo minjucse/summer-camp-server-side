@@ -51,7 +51,7 @@ async function run() {
       res.send(result);
     });
 
-    app.patch('/user/roleset', async (req, res) => {
+    app.patch('/api/user/roleset', async (req, res) => {
       
       const filter = { _id: new ObjectId(req.body.id) };
 

@@ -33,6 +33,10 @@ async function run() {
     const usersCollection = client.db('campSchool').collection('users');
 
     // Users related apis start
+    app.get('/api/users',  async (req, res) => {
+      const result = await usersCollection.find().toArray();
+      res.send(result);
+    });
 
     app.post('/api/add-user', async (req, res) => {
       const user = req.body;
@@ -46,6 +50,8 @@ async function run() {
       const result = await usersCollection.insertOne(user);
       res.send(result);
     });
+
+   
     // Users related apis end
 
     console.log("Pinged your deployment. You successfully connected to MongoDB!");

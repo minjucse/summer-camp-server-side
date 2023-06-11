@@ -1,6 +1,7 @@
 const express = require('express');
 const cors = require('cors');
 const app = express();
+const jwt = require('jsonwebtoken');
 const port = process.env.PORT || 5000;
 
 const { MongoClient, ServerApiVersion, ObjectId } = require('mongodb');
@@ -32,6 +33,13 @@ async function run() {
     // Users Table 
     const usersCollection = client.db('campSchool').collection('users');
 
+    app.post('/jwt', (req, res) => {
+      const user = req.body;
+      const token = jwt.sign(user, process.env.ACCESS_TOKEN_SECRET, { expiresIn: '24h' })
+
+      res.send({ token })
+    })
+
     // Users related apis start
     app.get('/api/users', async (req, res) => {
       const result = await usersCollection.find().toArray();
@@ -57,7 +65,7 @@ async function run() {
 
       const updateDoc = {
         $set: {
-          role: body.role
+          role: req.body.role
         },
       };
 

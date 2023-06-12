@@ -132,13 +132,7 @@ async function run() {
 
     // Class related apis start
     app.get('/api/class-list', verifyJWT, async (req, res) => {
-      const email = req.params.email;
-
-      if (req.decoded.email !== email) {
-        res.send({ admin: false })
-      }
-
-      const result = await classesCollection.toArray();
+      const result = await classesCollection.find().toArray();
       res.send(result);
     })
 

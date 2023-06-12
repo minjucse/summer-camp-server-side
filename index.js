@@ -75,6 +75,11 @@ async function run() {
       res.send(result);
     });
 
+    app.get('/api/all-users',  async (req, res) => {
+      const result = await usersCollection.find({role: 'instructor'}).sort({ createdAt: -1 }).toArray();
+      res.send(result);
+    });
+
     app.post('/api/add-user', async (req, res) => {
       const user = req.body;
       const query = { email: user.email }

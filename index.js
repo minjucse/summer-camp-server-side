@@ -82,6 +82,7 @@ async function run() {
 
     app.post('/api/add-user', async (req, res) => {
       const user = req.body;
+      user.createdAt = new Date();
       const query = { email: user.email }
       const existingUser = await usersCollection.findOne(query);
 
@@ -169,6 +170,11 @@ async function run() {
       const result = await classesCollection.updateOne(filter, updateDoc);
       res.send(result);
     })
+
+    app.get('/api/all-classes',  async (req, res) => {
+      const result = await usersCollection.find({status: 'approved'}).sort({ createdAt: -1 }).toArray();
+      res.send(result);
+    });
     // Class related apis end
 
     // instructor related apis start

@@ -49,6 +49,8 @@ async function run() {
 
     // Users Table 
     const usersCollection = client.db('campSchool').collection('users');
+    const classesCollection = client.db('campSchool').collection('allClasses');
+
 
     app.post('/jwt', (req, res) => {
       const user = req.body;
@@ -87,7 +89,7 @@ async function run() {
     });
 
     app.patch('/api/user/roleset', async (req, res) => {
-      
+
       const filter = { _id: new ObjectId(req.body.id) };
 
       const updateDoc = {
@@ -113,7 +115,68 @@ async function run() {
       const result = { admin: user?.role === 'admin' }
       res.send(result);
     })
+
+    app.get('/api/users/instructor/:email', verifyJWT, async (req, res) => {
+      const email = req.params.email;
+
+      if (req.decoded.email !== email) {
+        res.send({ instructor: false })
+      }
+
+      const query = { email: email }
+      const user = await usersCollection.findOne(query);
+      const result = { instructor: user?.role === 'instructor' }
+      res.send(result);
+    })
     // Users related apis end
+
+    // Class related apis start
+    app.get('/api/class-list', verifyJWT, async (req, res) => {
+      const email = req.params.email;
+
+      if (req.decoded.email !== email) {
+        res.send({ admin: false })
+      }
+
+      const result = await classesCollection.toArray();
+      res.send(result);
+    })
+
+    app.post("/api/add-class", async (req, res) => {
+      const body = req.body;
+      body.createdAt = new Date();
+      body.status = 'pending';
+      const result = await classesCollection.insertOne(body);
+      if (result?.insertedId) {
+        return res.status(200).send(result);
+      } else {
+        return res.status(404).send({
+          message: "can not insert try again leter",
+          status: false,
+        });
+      }
+    });
+    
+    app.patch('/api/class-update', verifyJWT, async (req, res) => {
+      const filter = { _id: new ObjectId(req.body.id) };
+
+      const updateDoc = {
+        $set: {
+          status: req.body.status,
+          feedback: req.body.feedback
+        },
+      };
+
+      const result = await classesCollection.updateOne(filter, updateDoc);
+      res.send(result);
+    })
+    // Class related apis end
+
+    // instructor related apis start
+    // instructor related apis end
+
+    // Student related apis start
+    // Student related apis end
 
     console.log("Pinged your deployment. You successfully connected to MongoDB!");
   } finally {

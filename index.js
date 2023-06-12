@@ -156,8 +156,8 @@ async function run() {
         });
       }
     });
-    
-    app.patch('/api/class-update', verifyJWT, async (req, res) => {
+
+    app.patch('/api/class-update',  async (req, res) => {
       const filter = { _id: new ObjectId(req.body.id) };
 
       const updateDoc = {

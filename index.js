@@ -172,7 +172,7 @@ async function run() {
     })
 
     app.get('/api/all-classes',  async (req, res) => {
-      const result = await usersCollection.find({status: 'approved'}).sort({ createdAt: -1 }).toArray();
+      const result = await classesCollection.find({status: 'approved'}).sort({ createdAt: -1 }).toArray();
       res.send(result);
     });
 

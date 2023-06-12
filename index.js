@@ -50,7 +50,7 @@ async function run() {
     // Users Table 
     const usersCollection = client.db('campSchool').collection('users');
     const classesCollection = client.db('campSchool').collection('allClasses');
-
+    const selectClassCollection = client.db('campSchool').collection('selectClass');
 
     app.post('/jwt', (req, res) => {
       const user = req.body;
@@ -175,6 +175,27 @@ async function run() {
       const result = await usersCollection.find({status: 'approved'}).sort({ createdAt: -1 }).toArray();
       res.send(result);
     });
+
+    app.post("/api/add-select-class", async (req, res) => {
+      const body = req.body;
+      body.createdAt = new Date();
+      body.classId = body._id;
+      const result = await selectClassCollection.insertOne(body);
+      if (result?.insertedId) {
+        return res.status(200).send(result);
+      } else {
+        return res.status(404).send({
+          message: "can not insert try again leter",
+          status: false,
+        });
+      }
+    });
+    app.delete('/select-class/:id', async (req, res) => {
+      const query = { _classId: new ObjectId(req.params.id) }
+      const result = await selectClassCollection.deleteOne(query);
+      res.send(result);
+  })
+    
     // Class related apis end
 
     // instructor related apis start

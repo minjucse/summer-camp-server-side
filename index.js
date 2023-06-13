@@ -217,7 +217,7 @@ async function run() {
       res.send(result);
     });
 
-    app.delete('/select-class/:id', async (req, res) => {
+    app.delete('/api/select-class/:id', async (req, res) => {
       const query = { _id: new ObjectId(req.params.id) }
       const result = await selectClassCollection.deleteOne(query);
       res.send(result);

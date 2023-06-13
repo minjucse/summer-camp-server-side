@@ -193,7 +193,14 @@ async function run() {
     app.post("/api/add-select-class", async (req, res) => {
       const body = req.body;
       body.createdAt = new Date();
-      body.classId = body._id;
+
+      const query = { classId: body.classId }
+      const existingResult = await selectClassCollection.findOne(query);
+
+      if (existingResult) {
+        return res.send({ message: 'Already select' })
+      }
+
       const result = await selectClassCollection.insertOne(body);
       if (result?.insertedId) {
         return res.status(200).send(result);
@@ -204,6 +211,12 @@ async function run() {
         });
       }
     });
+
+    app.get('/api/all-select-class/:email',  async (req, res) => {
+      const result = await selectClassCollection.find({role: req.params.email}).sort({ createdAt: -1 }).toArray();
+      res.send(result);
+    });
+
     app.delete('/select-class/:id', async (req, res) => {
       const query = { _classId: new ObjectId(req.params.id) }
       const result = await selectClassCollection.deleteOne(query);

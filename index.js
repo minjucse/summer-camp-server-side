@@ -218,7 +218,7 @@ async function run() {
     });
 
     app.delete('/select-class/:id', async (req, res) => {
-      const query = { _classId: new ObjectId(req.params.id) }
+      const query = { _id: new ObjectId(req.params.id) }
       const result = await selectClassCollection.deleteOne(query);
       res.send(result);
   })

@@ -83,6 +83,7 @@ async function run() {
     app.post('/api/add-user', async (req, res) => {
       const user = req.body;
       user.createdAt = new Date();
+      user.role = 'student';
       const query = { email: user.email }
       const existingUser = await usersCollection.findOne(query);
 
@@ -132,6 +133,19 @@ async function run() {
       const query = { email: email }
       const user = await usersCollection.findOne(query);
       const result = { instructor: user?.role === 'instructor' }
+      res.send(result);
+    })
+
+    app.get('/api/users/student/:email', verifyJWT, async (req, res) => {
+      const email = req.params.email;
+
+      if (req.decoded.email !== email) {
+        res.send({ instructor: false })
+      }
+
+      const query = { email: email }
+      const user = await usersCollection.findOne(query);
+      const result = { instructor: user?.role === 'student' }
       res.send(result);
     })
     // Users related apis end

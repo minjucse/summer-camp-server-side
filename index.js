@@ -213,7 +213,7 @@ async function run() {
     });
 
     app.get('/api/all-select-class/:email',  async (req, res) => {
-      const result = await selectClassCollection.find({role: req.params.email}).sort({ createdAt: -1 }).toArray();
+      const result = await selectClassCollection.find({studentEmail: req.params.email}).sort({ createdAt: -1 }).toArray();
       res.send(result);
     });
 

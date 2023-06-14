@@ -2,10 +2,12 @@ const express = require('express');
 const cors = require('cors');
 const app = express();
 const jwt = require('jsonwebtoken');
+require('dotenv').config();
+const stripe = require("stripe")(process.env.PAYMENT_SECRET_KEY);
 const port = process.env.PORT || 5000;
 
 const { MongoClient, ServerApiVersion, ObjectId } = require('mongodb');
-require('dotenv').config()
+
 
 // middleware
 app.use(cors());
@@ -51,6 +53,7 @@ async function run() {
     const usersCollection = client.db('campSchool').collection('users');
     const classesCollection = client.db('campSchool').collection('allClasses');
     const selectClassCollection = client.db('campSchool').collection('selectClass');
+    const paymentCollection = client.db("GameOnSummer").collection("payments");
 
     app.post('/jwt', (req, res) => {
       const user = req.body;
@@ -68,6 +71,19 @@ async function run() {
       }
       next();
     }
+
+    
+    const verifyStudent = async (req, res, next) => {
+      const email = req.decoded?.email;
+      const query = { email: email };
+      const user = await usersCollection.findOne(query);
+      if (user?.role !== "student") {
+        return res
+          .status(403)
+          .send({ error: true, message: "forbidden request" });
+      }
+      next();
+    };
 
     // Users related apis start
     app.get('/api/users', verifyJWT, verifyAdmin, async (req, res) => {
@@ -151,6 +167,16 @@ async function run() {
     // Users related apis end
 
     // Class related apis start
+    app.get("/topclasses", async (req, res) => {
+      const result = await classesCollection
+        .find({ status: "approved" })
+        .sort({ totalEnrolled: -1 })
+        .limit(6)
+        .toArray();
+      res.send(result);
+    });
+
+
     app.get('/api/class-list', verifyJWT, async (req, res) => {
       const result = await classesCollection.find().toArray();
       res.send(result);
@@ -194,7 +220,7 @@ async function run() {
       const body = req.body;
       body.createdAt = new Date();
 
-      const query = { classId: body.classId }
+      const query = { classId: body.classId, studentEmail: body.studentEmail }
       const existingResult = await selectClassCollection.findOne(query);
 
       if (existingResult) {
@@ -212,7 +238,7 @@ async function run() {
       }
     });
 
-    app.get('/api/all-select-class/:email', async (req, res) => {
+    app.get('/api/all-select-class/:email',verifyJWT, async (req, res) => {
       const result = await selectClassCollection.find({ studentEmail: req.params.email }).sort({ createdAt: -1 }).toArray();
       res.send(result);
     });
@@ -223,14 +249,103 @@ async function run() {
       res.send(result);
     })
 
-    app.get('/api/select-class/:id',async (req, res) => {
+    app.get('/api/select-class/:id', verifyJWT,async (req, res) => {
       const filter = { _id: new ObjectId(req.params.id) };
 
       const detail =await selectClassCollection.findOne(filter);
       
       res.send(detail)
     });
+
+     //online Stipe Payment Api
+     // create payment intent
+    app.post('/create-payment-intent', verifyJWT, async (req, res) => {
+      const { price } = req.body;
+        const amount = price * 100;
+        const paymentIntent = await stripe.paymentIntents.create({
+          amount: amount,
+          currency: "inr",
+          payment_method_types: ["card"],
+        });
+
+        res.send({
+          clientSecret: paymentIntent.client_secret,
+        });
+    })
     // Class related apis end
+    //student payment api
+    app.post("/payments", verifyJWT, verifyStudent, async (req, res) => {
+      const newPayment = req.body;
+      const filter = { _id: new ObjectId(newPayment?.classItemId) };
+      const classItems = await classesCollection.findOne(filter);
+      const enrolled = classItems.enrolled + 1;
+      const availableSeats = classItems.availableSeats - 1;
+      const updateClassItems = {
+        $set: { enrolled, availableSeats },
+      };
+      const insertResult = await paymentCollection.insertOne(newPayment);
+      const query = { _id: new ObjectId(newPayment?.cartItem) };
+      const deleteResult = await selectClassCollection.deleteOne(query);
+      const updateResult = await classesCollection.updateOne(
+        filter,
+        updateClassItems
+      );
+      res.send({ result: insertResult, deleteResult, updateResult });
+    });
+    // student enroll classes
+    app.get("/enrollClasses", verifyJWT, verifyStudent, async (req, res) => {
+      const email = req.query.email;
+      const query = { email: email };
+      const paymentResult = await paymentCollection.find(query).toArray();
+      console.log(paymentResult);
+      res.send(paymentResult);
+    });
+
+    // payment history for student classes
+
+    app.get(
+      "/student/paymentHistory",
+      verifyJWT,
+      verifyStudent,
+      async (req, res) => {
+        const email = req.query.email;
+        const query = { email: email };
+        const paymentResult = await paymentCollection
+          .find(query)
+          .sort({ _id: -1 })
+          .toArray();
+        res.send(paymentResult);
+      }
+    );
+
+    // ___________________________________________________________________________________________________
+
+    // top instructor
+    app.get("/topInstructor", async (req, res) => {
+      const classItems = await classesCollection.find({}).toArray();
+      const filter = { role: "instructor" };
+      const userResult = await usersCollection.find(filter).toArray();
+      const userDetails = userResult.map((user) => {
+        const userClass = classItems.filter(
+          (item) => item?.instructorEmail === user?.email
+        );
+        const ClassDetail = {
+          ClassName: userClass.map((item) => item.className),
+          classImage: userClass.map((item) => item.classImage),
+          classQuantity: userClass.length,
+          classId: userClass.map((item) => item._id),
+          totalEnrolled: userClass.reduce(
+            (sum, item) => sum + item?.totalEnrolled,
+            0
+          ),
+        };
+        return { ...ClassDetail, ...user };
+      });
+      userDetails.sort((a, b) => b.totalEnrolled - a.totalEnrolled);
+      const topInstructorDetails = userDetails?.slice(0, 6);
+
+      res.send(topInstructorDetails);
+    });
 
     // instructor related apis start
     // instructor related apis end

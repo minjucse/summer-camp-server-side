@@ -53,7 +53,7 @@ async function run() {
     const usersCollection = client.db('campSchool').collection('users');
     const classesCollection = client.db('campSchool').collection('allClasses');
     const selectClassCollection = client.db('campSchool').collection('selectClass');
-    const paymentCollection = client.db("GameOnSummer").collection("payments");
+    const paymentCollection = client.db("campSchool").collection("payments");
 
     app.post('/jwt', (req, res) => {
       const user = req.body;

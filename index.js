@@ -75,8 +75,8 @@ async function run() {
       res.send(result);
     });
 
-    app.get('/api/all-users',  async (req, res) => {
-      const result = await usersCollection.find({role: 'instructor'}).sort({ createdAt: -1 }).toArray();
+    app.get('/api/all-users', async (req, res) => {
+      const result = await usersCollection.find({ role: 'instructor' }).sort({ createdAt: -1 }).toArray();
       res.send(result);
     });
 
@@ -171,7 +171,7 @@ async function run() {
       }
     });
 
-    app.patch('/api/class-update',  async (req, res) => {
+    app.patch('/api/class-update', async (req, res) => {
       const filter = { _id: new ObjectId(req.body.id) };
 
       const updateDoc = {
@@ -185,8 +185,8 @@ async function run() {
       res.send(result);
     })
 
-    app.get('/api/all-classes',  async (req, res) => {
-      const result = await classesCollection.find({status: 'approved'}).sort({ createdAt: -1 }).toArray();
+    app.get('/api/all-classes', async (req, res) => {
+      const result = await classesCollection.find({ status: 'approved' }).sort({ createdAt: -1 }).toArray();
       res.send(result);
     });
 
@@ -212,8 +212,8 @@ async function run() {
       }
     });
 
-    app.get('/api/all-select-class/:email',  async (req, res) => {
-      const result = await selectClassCollection.find({studentEmail: req.params.email}).sort({ createdAt: -1 }).toArray();
+    app.get('/api/all-select-class/:email', async (req, res) => {
+      const result = await selectClassCollection.find({ studentEmail: req.params.email }).sort({ createdAt: -1 }).toArray();
       res.send(result);
     });
 
@@ -221,8 +221,13 @@ async function run() {
       const query = { _id: new ObjectId(req.params.id) }
       const result = await selectClassCollection.deleteOne(query);
       res.send(result);
-  })
-    
+    })
+
+    app.get('/api/select-class/:id', (req, res) => {
+      const id = parseInt(req.params.id);
+      const detail = selectClassCollection.find(id);
+      res.send(detail)
+    });
     // Class related apis end
 
     // instructor related apis start

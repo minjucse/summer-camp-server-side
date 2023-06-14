@@ -223,9 +223,11 @@ async function run() {
       res.send(result);
     })
 
-    app.get('/api/select-class/:id', (req, res) => {
-      const id = parseInt(req.params.id);
-      const detail = selectClassCollection.find(id);
+    app.get('/api/select-class/:id',async (req, res) => {
+      const filter = { _id: new ObjectId(req.params.id) };
+
+      const detail =await selectClassCollection.findOne(filter);
+      
       res.send(detail)
     });
     // Class related apis end

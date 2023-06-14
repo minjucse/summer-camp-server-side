@@ -278,10 +278,10 @@ async function run() {
       const newPayment = req.body;
       const filter = { _id: new ObjectId(newPayment?.classItemId) };
       const classItems = await classesCollection.findOne(filter);
-      const enrolled = classItems.enrolled + 1;
-      const availableSeats = classItems.availableSeats - 1;
+      const totalEnrolled = classItems.totalEnrolled + 1;
+      const quantity = classItems.quantity - 1;
       const updateClassItems = {
-        $set: { enrolled, availableSeats },
+        $set: { totalEnrolled, quantity },
       };
       const insertResult = await paymentCollection.insertOne(newPayment);
       const query = { _id: new ObjectId(newPayment?.cartItem) };
